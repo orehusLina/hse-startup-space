@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Бизнес-клуб · Стартапы и вакансии</title>
+  <!-- Inside Telegram this sets --tg-theme-* CSS variables and window.Telegram.WebApp; harmless in a browser. -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar" id="topbar" hidden>
+    <a href="#/feed" class="brand">Клуб<span>·</span>Match</a>
+    <nav class="nav" id="nav">
+      <a href="#/feed" data-tab="feed"><span class="ico">◎</span><span>Лента</span></a>
+      <a href="#/new" data-tab="new"><span class="ico">＋</span><span>Разместить</span></a>
+      <a href="#/me/posts" data-tab="me"><span class="ico">☺</span><span>Кабинет</span><i class="dot" id="badge" hidden></i></a>
+    </nav>
+  </header>
+  <main id="app" class="container"></main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
