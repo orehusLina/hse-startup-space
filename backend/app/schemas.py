@@ -59,8 +59,13 @@ class UserPublic(ORM):
 
 
 class UserMe(UserPublic):
-    email: str
+    email: str | None
     contact: str
+    telegram_id: int | None = None
+
+
+class TelegramLoginIn(BaseModel):
+    init_data: str = Field(min_length=1, max_length=4096)
 
 
 class LoginOut(BaseModel):

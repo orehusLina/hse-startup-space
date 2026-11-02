@@ -47,6 +47,20 @@ if (tg?.initData) {
 }
 const haptic = (type) => tg?.HapticFeedback?.notificationOccurred?.(type);
 
+// Inside Telegram the user is identified by signed initData, no password needed.
+let tgLoginError = "";
+async function telegramLogin() {
+  try {
+    const res = await api("/api/auth/telegram", { method: "POST", body: { init_data: tg.initData } });
+    auth.set(res.token, res.user);
+    tgLoginError = "";
+    return true;
+  } catch (e) {
+    tgLoginError = e.message;
+    return false;
+  }
+}
+
 // ---------- API ----------
 const auth = {
   get token() { return localStorage.getItem("token"); },
@@ -75,7 +89,7 @@ async function api(path, { method = "GET", body, params } = {}) {
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401 && path !== "/api/auth/login") {
+    if (res.status === 401 && !path.startsWith("/api/auth/")) {
       auth.clear();
       location.hash = "#/login";
     }
@@ -102,7 +116,9 @@ async function router() {
   if (!match) return (location.hash = "#/feed");
   const [re, view, opts] = match;
 
-  if (!opts.public && !auth.token) return (location.hash = "#/login");
+  if (!opts.public && !auth.token) {
+    if (!(tg?.initData && !tgLoginError && (await telegramLogin()))) return (location.hash = "#/login");
+  }
   if (!opts.public && !auth.user) {
     try { auth.user = await api("/api/me"); } catch { return; }
   }
@@ -136,6 +152,10 @@ async function viewLogin() {
     <div class="card stack" style="margin-top:8vh">
       <h1>Бизнес-клуб · Match</h1>
       <p class="muted">Стартапы и вакансии участников клуба. Войдите, чтобы смотреть ленту и откликаться.</p>
+      ${tg?.initData ? `
+        <button class="btn block" id="tgLogin">Войти через Telegram</button>
+        ${tgLoginError ? `<div class="err">${esc(tgLoginError)}</div>` : ""}
+        <div class="field-label">или по email</div>` : ""}
       <form id="login">
         <label>Email</label><input name="email" type="email" required autocomplete="username" />
         <label>Пароль</label><input name="password" type="password" required autocomplete="current-password" />
@@ -159,6 +179,12 @@ async function viewLogin() {
     } catch (e) {
       document.getElementById("err").textContent = e.message;
     }
+  };
+  const tgBtn = document.getElementById("tgLogin");
+  if (tgBtn) tgBtn.onclick = async () => {
+    tgBtn.disabled = true;
+    if (await telegramLogin()) location.hash = "#/feed";
+    else viewLogin();
   };
   document.getElementById("login").onsubmit = (ev) => {
     ev.preventDefault();
@@ -480,7 +506,7 @@ function renderProfileForm(el) {
     <div class="err" id="perr"></div>
     <button class="btn block" style="margin-top:14px">Сохранить</button>
     <button type="button" class="btn ghost block" id="logout" style="margin-top:8px">Выйти</button>
-    <p class="small muted" style="margin-top:10px">Email: ${esc(u.email)}</p>
+    <p class="small muted" style="margin-top:10px">${u.telegram_id ? "Вход через Telegram" : `Email: ${esc(u.email)}`}</p>
   </form>`;
   const form = document.getElementById("profile");
   form.onsubmit = async (ev) => {

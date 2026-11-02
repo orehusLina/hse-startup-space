@@ -19,6 +19,9 @@ class Settings:
     seed_on_start: bool = _bool("SEED_ON_START", False)
     session_ttl_days: int = int(os.getenv("SESSION_TTL_DAYS", "30"))
     password_iterations: int = int(os.getenv("PASSWORD_ITERATIONS", "200000"))
+    # Token from @BotFather: used to verify Telegram WebApp initData. Empty = Telegram login disabled.
+    telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    telegram_init_data_max_age: int = int(os.getenv("TELEGRAM_INIT_DATA_MAX_AGE", "86400"))
 
 
 settings = Settings()

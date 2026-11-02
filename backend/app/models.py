@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -32,8 +33,11 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(255))
+    # Telegram users log in via initData and have no email/password;
+    # test accounts have email/password and no telegram_id.
+    telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     full_name: Mapped[str] = mapped_column(String(120))
     headline: Mapped[str] = mapped_column(String(160), default="")
     bio: Mapped[str] = mapped_column(Text, default="")

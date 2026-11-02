@@ -22,6 +22,8 @@ services:
       DATABASE_URL: postgresql+psycopg://club:club@db:5432/club
       SEED_ON_START: "true"
       DEMO_MODE: "true"
+      # Token from @BotFather; read from .env. Without it Telegram login is off and only test accounts work.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     ports:
       - "8000:8000"
     depends_on:

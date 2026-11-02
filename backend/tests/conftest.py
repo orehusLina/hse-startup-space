@@ -7,6 +7,7 @@ os.environ.setdefault(
 os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 os.environ["PASSWORD_ITERATIONS"] = "1000"  # fast hashing in tests
 os.environ["SEED_ON_START"] = "false"
+os.environ["TELEGRAM_BOT_TOKEN"] = "123456:TEST-BOT-TOKEN"
 
 import itertools  # noqa: E402
 
