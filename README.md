@@ -23,12 +23,18 @@ API-документация (Swagger): http://localhost:8000/docs
 
 Внутри Telegram пользователь входит автоматически, без пароля. Приложение отправляет на бэкенд `Telegram.WebApp.initData`, бэкенд проверяет подпись токеном бота и при первом входе создаёт профиль из данных Telegram (имя, `@username` в качестве контакта).
 
-1. Создайте бота у [@BotFather](https://t.me/BotFather) и скопируйте токен.
-2. `cp .env.example .env` и впишите `TELEGRAM_BOT_TOKEN=...`
-3. `docker compose up --build`
-4. Mini-app должен открываться по HTTPS. Для локальной проверки подойдёт туннель, например `cloudflared tunnel --url http://localhost:8000` или `ngrok http 8000`.
-5. В @BotFather выполните `/newapp` (или Bot Settings → Menu Button) и укажите HTTPS-адрес туннеля.
-6. Откройте бота в Telegram и запустите приложение: вход произойдёт сам.
+Два шага:
+
+1. Создайте бота у [@BotFather](https://t.me/BotFather) и положите рядом с `docker-compose.yml` файл `.env` с одной строкой:
+   ```
+   TELEGRAM_BOT_TOKEN=<токен от BotFather>
+   ```
+2. Запустите:
+   ```bash
+   docker compose --profile telegram up --build
+   ```
+
+Дальше всё произойдёт само. Сервис `tunnel` (cloudflared quick tunnel, без регистрации) выдаст временный HTTPS-адрес, а сервис `bot-setup` (`app/telegram_setup.py`) пропишет его в кнопку «Открыть» у бота через Bot API `setChatMenuButton`. В логах появится ссылка на бота: откройте её в Telegram и нажмите «Открыть». Адрес туннеля меняется при каждом запуске, и скрипт каждый раз обновляет кнопку.
 
 Без токена вход через Telegram выключен (`503`), работают только тестовые аккаунты. Так проект можно проверить в обычном браузере.
 

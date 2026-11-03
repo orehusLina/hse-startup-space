@@ -30,6 +30,25 @@ services:
       db:
         condition: service_healthy
 
+  # --- Telegram mode: docker compose --profile telegram up --build ---
+  # Free temporary https address (no account needed); a new one on every start.
+  tunnel:
+    image: cloudflare/cloudflared:2024.12.2
+    command: ["tunnel", "--no-autoupdate", "--metrics", "0.0.0.0:2000", "--url", "http://api:8000"]
+    depends_on: [api]
+    profiles: ["telegram"]
+
+  # Waits for the tunnel address and sets it as the bot's "Открыть" button, then exits.
+  bot-setup:
+    build: ./backend
+    command: ["python", "-m", "app.telegram_setup"]
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TUNNEL_METRICS_URL: http://tunnel:2000/quicktunnel
+    depends_on: [tunnel]
+    restart: "no"
+    profiles: ["telegram"]
+
   # Runs only on demand: docker compose run --rm tests
   tests:
     build: ./backend
