@@ -475,3 +475,11 @@ body.auth { background: radial-gradient(800px 460px at 15% -10%, rgba(97,148,255
 .seg button { flex: 1 1 auto; white-space: nowrap; padding: 8px 6px; }
 @media (max-width: 400px) { .seg button { font-size: 13px; padding: 8px 4px; } }
 @media (max-width: 340px) { .seg button { font-size: 12px; letter-spacing: -.01em; } }
+
+/* immersive scroll on mobile: toolbar and bottom nav slide away while reading */
+@media (max-width: 859px) {
+  .toolbar, .nav, .cta-bar { transition: transform .32s var(--ease), opacity .32s var(--ease), bottom .32s var(--ease); }
+  body.immersive .toolbar { transform: translateY(calc(-100% - 8px)); opacity: 0; pointer-events: none; }
+  body.immersive .nav { transform: translate(-50%, calc(100% + 40px)); opacity: 0; pointer-events: none; }
+  body.immersive .cta-bar { bottom: calc(14px + env(safe-area-inset-bottom)); }
+}

@@ -109,7 +109,28 @@ if (tg?.initData) {
   tg.setBackgroundColor?.("#06081c");
   tg.BackButton.onClick(() => history.back());
 }
+// Scrolling a list inside Telegram should not swipe the whole mini-app closed (Bot API 7.7+).
+tg?.disableVerticalSwipes?.();
 const haptic = (type) => tg?.HapticFeedback?.notificationOccurred?.(type);
+
+/* Immersive scroll (mobile): scrolling down hides the sticky toolbar and the bottom nav so the
+   content gets the whole screen; any scroll up, reaching the top or the end of the page brings
+   them back. Desktop keeps everything visible. */
+(() => {
+  let lastY = window.scrollY, ticking = false;
+  const update = () => {
+    ticking = false;
+    const y = window.scrollY;
+    const nearTop = y < 140;
+    const nearBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 80;
+    const delta = y - lastY;
+    if (nearTop || nearBottom || delta < -6) document.body.classList.remove("immersive");
+    else if (delta > 6) document.body.classList.add("immersive");
+    if (Math.abs(delta) > 6 || nearTop) lastY = y;
+  };
+  window.addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  window.addEventListener("hashchange", () => { document.body.classList.remove("immersive"); lastY = 0; });
+})();
 const tap = () => tg?.HapticFeedback?.impactOccurred?.("light");
 
 /** Chat link from the API (https://t.me/… or tg://user?id=… when there is no username). */
