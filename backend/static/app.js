@@ -25,8 +25,9 @@ const GRADS = {
     "linear-gradient(150deg,#1f3e8c,#080d24)", "linear-gradient(150deg,#3b4a6b,#121a33)",
   ],
 };
-const AVATAR_EMOJI = ["🚀", "💼", "🧑‍💻", "👩‍💼", "👨‍💼", "🎨", "📈", "💡", "🌱", "📣", "🦄", "🔥",
-  "⚡", "🎯", "🧠", "🛠️", "🏆", "💎", "🌍", "🎓", "🤝", "🦊", "🐼", "😎"];
+// Single-codepoint emoji only: ZWJ sequences (🧑‍💻) fall apart into two glyphs on Windows.
+const AVATAR_EMOJI = ["🚀", "💼", "💻", "👔", "📊", "🎨", "📈", "💡", "🌱", "📣", "🦄", "🔥",
+  "⚡", "🎯", "🧠", "🔧", "🏆", "💎", "🌍", "🎓", "🤝", "🦊", "🐼", "😎"];
 
 // ---------- utils ----------
 const $app = document.getElementById("app");
