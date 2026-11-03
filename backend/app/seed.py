@@ -13,6 +13,7 @@ DEMO_PASSWORD = "demo1234"
 DEMO_USERS = [
     {
         "email": "anna@club.test",
+        "avatar_emoji": "👩‍💼",
         "full_name": "Анна Смирнова",
         "headline": "Основатель EdTech-стартапа",
         "city": "Москва",
@@ -22,6 +23,7 @@ DEMO_USERS = [
     },
     {
         "email": "boris@club.test",
+        "avatar_emoji": "🧑‍💻",
         "full_name": "Борис Ким",
         "headline": "Backend-разработчик, Python",
         "city": "Санкт-Петербург",
@@ -31,6 +33,7 @@ DEMO_USERS = [
     },
     {
         "email": "vera@club.test",
+        "avatar_emoji": "🎨",
         "full_name": "Вера Орлова",
         "headline": "Продуктовый дизайнер",
         "city": "Казань",
@@ -40,6 +43,7 @@ DEMO_USERS = [
     },
     {
         "email": "gleb@club.test",
+        "avatar_emoji": "🌱",
         "full_name": "Глеб Иванов",
         "headline": "Серийный предприниматель, AgroTech",
         "city": "Краснодар",
@@ -49,6 +53,7 @@ DEMO_USERS = [
     },
     {
         "email": "dina@club.test",
+        "avatar_emoji": "📣",
         "full_name": "Дина Ахмедова",
         "headline": "Маркетолог, growth",
         "city": "Москва",

@@ -56,6 +56,8 @@ class UserPublic(ORM):
     bio: str
     city: str
     skills: list[str]
+    photo_url: str = ""
+    avatar_emoji: str = ""
 
 
 class UserMe(UserPublic):
@@ -78,6 +80,7 @@ class DemoAccount(BaseModel):
     password: str
     full_name: str
     headline: str
+    avatar_emoji: str = ""
 
 
 class ProfileUpdate(BaseModel):
@@ -87,8 +90,9 @@ class ProfileUpdate(BaseModel):
     city: str | None = Field(default=None, max_length=80)
     skills: list[str] | None = None
     contact: str | None = Field(default=None, max_length=120)
+    avatar_emoji: str | None = Field(default=None, max_length=16)
 
-    _strip_fields = field_validator("full_name", "headline", "bio", "city", "contact", mode="before")(
+    _strip_fields = field_validator("full_name", "headline", "bio", "city", "contact", "avatar_emoji", mode="before")(
         _strip
     )
 

@@ -22,12 +22,13 @@ def test_logout_invalidates_token(author):
 def test_update_profile_normalizes_skills(author):
     r = author.patch(
         "/api/me",
-        {"headline": "  CTO  ", "skills": ["Python", " python ", "", "Go"], "city": "Москва"},
+        {"headline": "  CTO  ", "skills": ["Python", " python ", "", "Go"], "city": "Москва", "avatar_emoji": "🦄"},
     )
     assert r.status_code == 200
     body = r.json()
     assert body["headline"] == "CTO"
     assert body["skills"] == ["Python", "Go"]
+    assert body["avatar_emoji"] == "🦄"
     assert author.get("/api/me").json()["city"] == "Москва"
 
 

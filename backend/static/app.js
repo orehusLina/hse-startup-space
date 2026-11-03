@@ -8,25 +8,27 @@ const POST_STATUS = { active: "Активна", paused: "На паузе", close
 const RESP_STATUS = { pending: "На рассмотрении", accepted: "Принят", rejected: "Отклонён", withdrawn: "Отозван" };
 const STAGE_EMOJI = { idea: "💡", mvp: "🛠️", early_revenue: "📈", growth: "🚀" };
 
+// HSE Business Club palette: blues #6194ff → #1f3e8c, yellow accent #fff705.
 const GRADS = {
   startup: [
-    "linear-gradient(135deg,#6d5dfc,#a35bf5)",
-    "linear-gradient(135deg,#8b5cf6,#ec4899)",
-    "linear-gradient(135deg,#4f46e5,#06b6d4)",
-    "linear-gradient(135deg,#f97316,#ec4899)",
+    "linear-gradient(135deg,#6194ff,#1f3e8c)",
+    "linear-gradient(135deg,#2363e7,#131b3a)",
+    "linear-gradient(135deg,#5383e5,#2e4885)",
+    "linear-gradient(135deg,#4582de,#19264e)",
   ],
   vacancy: [
-    "linear-gradient(135deg,#0fa89a,#22c3e6)",
-    "linear-gradient(135deg,#10b981,#84cc16)",
-    "linear-gradient(135deg,#0ea5e9,#6366f1)",
-    "linear-gradient(135deg,#14b8a6,#3b82f6)",
+    "linear-gradient(135deg,#fff705,#f2c200)",
+    "linear-gradient(135deg,#fff705,#9fd8ff)",
+    "linear-gradient(135deg,#ffe95c,#ffb800)",
   ],
   people: [
-    "linear-gradient(135deg,#6d5dfc,#a35bf5)", "linear-gradient(135deg,#f97316,#f43f5e)",
-    "linear-gradient(135deg,#0ea5e9,#22c55e)", "linear-gradient(135deg,#ec4899,#8b5cf6)",
-    "linear-gradient(135deg,#14b8a6,#0ea5e9)", "linear-gradient(135deg,#eab308,#f97316)",
+    "linear-gradient(135deg,#6194ff,#1f3e8c)", "linear-gradient(135deg,#2363e7,#19264e)",
+    "linear-gradient(135deg,#5383e5,#131b3a)", "linear-gradient(135deg,#3f61ae,#06081c)",
+    "linear-gradient(135deg,#4582de,#2e4885)",
   ],
 };
+const AVATAR_EMOJI = ["🚀", "💼", "🧑‍💻", "👩‍💼", "👨‍💼", "🎨", "📈", "💡", "🌱", "📣", "🦄", "🔥",
+  "⚡", "🎯", "🧠", "🛠️", "🏆", "💎", "🌍", "🎓", "🤝", "🦊", "🐼", "😎"];
 
 // ---------- utils ----------
 const $app = document.getElementById("app");
@@ -38,8 +40,14 @@ const pick = (arr, key) => arr[hash(key) % arr.length];
 const postGrad = (p) => pick(GRADS[p.kind], p.id);
 const postEmoji = (p) => (p.kind === "vacancy" ? "💼" : STAGE_EMOJI[p.stage] || "🚀");
 const initials = (name) => name.split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase();
-const avatar = (name, cls = "") =>
-  `<div class="avatar ${cls}" style="background:${pick(GRADS.people, name)}">${esc(initials(name))}</div>`;
+/** Avatar for a user object: Telegram photo → chosen emoji → initials, on a brand gradient.
+ *  The photo sits on top of the fallback, so a broken image just reveals the emoji/initials. */
+function avatar(u, cls = "") {
+  const fallback = u.avatar_emoji ? esc(u.avatar_emoji) : esc(initials(u.full_name));
+  const photo = u.photo_url?.startsWith("https://")
+    ? `<img src="${esc(u.photo_url)}" alt="" loading="lazy" onerror="this.remove()" />` : "";
+  return `<div class="avatar ${cls} ${u.avatar_emoji ? "emoji" : ""}" style="background:${pick(GRADS.people, u.full_name)}">${fallback}${photo}</div>`;
+}
 const svg = (id, cls = "ico") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
 const plural = (n, one, few, many) => {
   const m10 = n % 10, m100 = n % 100;
@@ -98,7 +106,8 @@ if (tg?.initData) {
   document.documentElement.classList.add("tg");
   tg.ready();
   tg.expand();
-  tg.setHeaderColor?.("secondary_bg_color");
+  tg.setHeaderColor?.("#06081c");
+  tg.setBackgroundColor?.("#06081c");
   tg.BackButton.onClick(() => history.back());
 }
 const haptic = (type) => tg?.HapticFeedback?.notificationOccurred?.(type);
@@ -223,8 +232,9 @@ async function viewLogin() {
     <div class="auth-wrap">
       <div class="auth-head rise">
         <div class="logo">✦</div>
-        <h1>Startup Space</h1>
-        <p>Стартапы и вакансии участников бизнес-клуба.<br/>Находите команду, проекты и партнёров.</p>
+        <div class="eyebrow">Бизнес-клуб ВШЭ</div>
+        <h1>Startup <span>Space</span></h1>
+        <p>Стартапы и вакансии резидентов крупнейшего студенческого бизнес-клуба России.<br/>Находите команду, проекты и партнёров.</p>
       </div>
       <div class="glass rise" style="--i:2">
         ${tg?.initData ? `
@@ -241,7 +251,7 @@ async function viewLogin() {
           <div class="or">тестовые аккаунты · пароль ${esc(demo[0].password)}</div>
           <div class="demo">${demo.map((d, i) => `
             <button class="rise" style="--i:${i + 3}" data-email="${esc(d.email)}" data-pass="${esc(d.password)}">
-              ${avatar(d.full_name)}
+              ${avatar(d)}
               <span class="grow"><b>${esc(d.full_name)}</b><br/><span class="small muted">${esc(d.headline)}</span></span>
               ${svg("chev", "ico-sm chev")}
             </button>`).join("")}
@@ -326,12 +336,13 @@ async function viewFeed() {
   const firstName = auth.user.full_name.split(" ")[0];
   $app.innerHTML = `
     <section class="hero rise">
-      <div class="hello">Привет, ${esc(firstName)} 👋</div>
-      <h1>Найдите свою команду</h1>
+      <div class="eyebrow">HSE Business Club</div>
+      <div class="hello" style="margin-top:10px">Привет, ${esc(firstName)} 👋</div>
+      <h1>Найди <em>команду</em> для своего дела</h1>
       <div class="stats">
         <button class="stat" data-k="startup"><b id="nStartups">·</b><span id="lStartups">стартапов</span></button>
         <button class="stat" data-k="vacancy"><b id="nVacancies">·</b><span id="lVacancies">вакансий</span></button>
-        <a class="stat" href="#/me/received"><b id="nPending">${pendingCount}</b><span>${plural(pendingCount, "входящий", "входящих", "входящих")}</span></a>
+        <a class="stat ${pendingCount ? "hot" : ""}" href="#/me/received"><b id="nPending">${pendingCount}</b><span>${plural(pendingCount, "входящий", "входящих", "входящих")}</span></a>
       </div>
     </section>
     <div class="toolbar">
@@ -432,7 +443,7 @@ async function viewPost(m) {
       </div>` : "";
 
   $app.innerHTML = `
-    <section class="cover rise" style="background:${postGrad(p)}">
+    <section class="cover ${p.kind} rise" style="background:${postGrad(p)}">
       <a class="back" href="javascript:history.back()" aria-label="Назад">${svg("back")}</a>
       <div class="big-emoji">${postEmoji(p)}</div>
       <span class="kind-pill">${KIND[p.kind]}${p.status !== "active" ? ` · ${POST_STATUS[p.status]}` : ""}</span>
@@ -449,7 +460,7 @@ async function viewPost(m) {
       ${textSection(p.kind === "startup" ? "Кого ищем" : "Требования", p.looking_for, 5)}
       ${vacancies}
       <div class="card rise" style="--i:6"><div class="section-title">Автор</div>
-        <div class="person">${avatar(p.author.full_name)}
+        <div class="person">${avatar(p.author)}
           <div class="grow"><b>${esc(p.author.full_name)}</b><div class="small muted">${esc([p.author.headline, p.author.city].filter(Boolean).join(" · "))}</div></div>
         </div>
         ${p.author.bio ? `<p class="small muted" style="margin-top:10px">${esc(p.author.bio)}</p>` : ""}
@@ -569,11 +580,13 @@ async function renderOwnerPanel(p, el) {
 function receivedCard(r, showPost, i) {
   const a = r.applicant;
   return `<div class="card rise" style="--i:${i}" data-id="${r.id}">
-    <div class="person">${avatar(a.full_name)}
-      <div class="grow"><b>${esc(a.full_name)}</b><div class="small muted">${esc([a.headline, a.city].filter(Boolean).join(" · ") || "Участник клуба")}</div></div>
+    <div class="person">${avatar(a)}
+      <div class="grow"><b>${esc(a.full_name)}</b><div class="small muted">${esc([a.headline, a.city].filter(Boolean).join(" · ") || "Резидент клуба")}</div></div>
+    </div>
+    <div class="row spread" style="margin-top:10px">
+      ${showPost ? `<a class="small grow" href="#/post/${r.post.id}">→ ${esc(r.post.title)}</a>` : "<span></span>"}
       ${badge(r.status, RESP_STATUS[r.status])}
     </div>
-    ${showPost ? `<a class="small" href="#/post/${r.post.id}" style="display:inline-block;margin-top:10px">→ ${esc(r.post.title)}</a>` : ""}
     <div class="bubble"><div class="who">${timeAgo(r.created_at)}</div><div class="pre">${esc(r.message)}</div></div>
     ${chips(a.skills)}
     ${r.author_note ? `<div class="bubble author"><div class="who">Ваш ответ</div>${esc(r.author_note)}</div>` : ""}
@@ -637,7 +650,7 @@ async function viewCabinet(m) {
   ];
   $app.innerHTML = `
     <section class="profile-hero rise">
-      <div class="person">${avatar(u.full_name, "lg")}
+      <div class="person"><button class="avatar-edit" id="avatarEdit" aria-label="Сменить аватар">${avatar(u, "lg")}</button>
         <div class="grow"><h1>${esc(u.full_name)}</h1><div class="sub">${esc(u.headline || "Расскажите о себе в профиле — так авторам проще вас оценить")}</div></div>
       </div>
       ${u.skills.length ? `<div class="chips" style="margin-top:14px">${u.skills.map((s) => `<span class="chip" style="background:rgba(255,255,255,.18);color:#fff">${esc(s)}</span>`).join("")}</div>` : ""}
@@ -646,6 +659,7 @@ async function viewCabinet(m) {
       `<a href="#/me/${k}" class="${k === tab ? "on" : ""}">${t}${n !== null ? `<span class="n ${hot ? "hot" : ""}">${n}</span>` : ""}</a>`).join("")}</nav>
     <div id="tab" style="margin-top:8px"></div>`;
   const el = document.getElementById("tab");
+  document.getElementById("avatarEdit").onclick = () => { tap(); openAvatarPicker(); };
 
   if (tab === "posts") {
     el.innerHTML = myPosts.length
@@ -668,6 +682,25 @@ async function viewCabinet(m) {
   } else {
     renderProfileForm(el);
   }
+}
+
+function openAvatarPicker() {
+  const u = auth.user;
+  openSheet(`
+    <h3>Аватар</h3>
+    <p class="small muted">${u.photo_url ? "Сейчас показывается фото из Telegram. Эмодзи будет виден, если фото недоступно." : "Выберите эмодзи — так вас проще узнать в ленте и откликах."}</p>
+    <div class="emoji-grid" style="margin-top:14px">
+      ${AVATAR_EMOJI.map((e) => `<button type="button" data-e="${e}" class="${u.avatar_emoji === e ? "on" : ""}">${e}</button>`).join("")}
+    </div>
+    <button type="button" class="btn ghost block" data-e="" style="margin-top:14px">Без эмодзи — инициалы</button>`,
+  (root, close) => {
+    root.querySelectorAll("[data-e]").forEach((b) => (b.onclick = async () => {
+      try {
+        auth.user = await api("/api/me", { method: "PATCH", body: { avatar_emoji: b.dataset.e } });
+        haptic("success"); close(); toast("Аватар обновлён"); router();
+      } catch (e) { toast(e.message, true); }
+    }));
+  });
 }
 
 function renderProfileForm(el) {

@@ -23,7 +23,8 @@ def make_init_data(user: dict, *, auth_date: int | None = None, token: str = BOT
     return urlencode(fields)
 
 
-TG_USER = {"id": 777000111, "first_name": "Ольга", "last_name": "Петрова", "username": "olga_p"}
+TG_USER = {"id": 777000111, "first_name": "Ольга", "last_name": "Петрова", "username": "olga_p",
+           "photo_url": "https://t.me/i/userpic/320/olga.jpg"}
 
 
 def _login(client, init_data):
@@ -38,6 +39,7 @@ def test_first_telegram_login_creates_profile_and_session(client):
     assert body["user"]["contact"] == "@olga_p"
     assert body["user"]["telegram_id"] == TG_USER["id"]
     assert body["user"]["email"] is None
+    assert body["user"]["photo_url"] == TG_USER["photo_url"]
 
     headers = {"Authorization": f"Bearer {body['token']}"}
     assert client.get("/api/me", headers=headers).json()["full_name"] == "Ольга Петрова"

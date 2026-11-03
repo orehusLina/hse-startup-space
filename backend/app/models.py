@@ -45,6 +45,9 @@ class User(Base):
     skills: Mapped[list[str]] = mapped_column(ARRAY(String(40)), default=list)
     # How to reach the person (Telegram handle, phone...). Revealed only after an accepted response.
     contact: Mapped[str] = mapped_column(String(120), default="")
+    # Avatar: Telegram profile photo if available, otherwise an emoji chosen in the profile.
+    photo_url: Mapped[str] = mapped_column(String(512), default="")
+    avatar_emoji: Mapped[str] = mapped_column(String(16), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

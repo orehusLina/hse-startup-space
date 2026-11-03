@@ -4,7 +4,7 @@
 
 - **Backend:** Python 3.13, FastAPI, SQLAlchemy 2, psycopg 3
 - **БД:** PostgreSQL 16
-- **Frontend:** SPA на чистом JS (без сборки), отдаётся тем же FastAPI. Сделан mobile-first под Telegram WebApp: внизу таб-бар, на десктопе он превращается в верхнее меню, цвета берутся из `--tg-theme-*`.
+- **Frontend:** SPA на чистом JS (без сборки), отдаётся тем же FastAPI. Сделан mobile-first под Telegram WebApp: внизу плавающее меню, на десктопе оно превращается в верхнее. Оформление в фирменном стиле [Бизнес-клуба ВШЭ](https://hsebusinessclub.ru/): тёмно-синий `#06081c`, синий `#6194ff`/`#2363e7`, жёлтый акцент `#fff705`, шрифт Montserrat. Аватары: фото из Telegram, если его нет — эмодзи на выбор, иначе инициалы.
 - **Тесты:** pytest + TestClient, гоняются на настоящем PostgreSQL (отдельная БД `club_test`).
 
 ---

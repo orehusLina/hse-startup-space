@@ -52,6 +52,9 @@ def telegram_login(data: schemas.TelegramLoginIn, db: DB):
     except InvalidInitData as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Не удалось проверить данные Telegram: {e}")
 
+    photo = str(tg.get("photo_url") or "")
+    photo = photo[:512] if photo.startswith("https://") else ""  # rendered as <img src>, so https only
+
     user = db.scalar(select(User).where(User.telegram_id == tg["id"]))
     if user is None:
         full_name = " ".join(p for p in (tg.get("first_name"), tg.get("last_name")) if p) or "Участник клуба"
@@ -59,6 +62,7 @@ def telegram_login(data: schemas.TelegramLoginIn, db: DB):
             telegram_id=tg["id"],
             full_name=full_name[:120],
             contact=f"@{tg['username']}" if tg.get("username") else "",
+            photo_url=photo,
             skills=[],
         )
         db.add(user)
@@ -67,6 +71,9 @@ def telegram_login(data: schemas.TelegramLoginIn, db: DB):
         except IntegrityError:  # two parallel first logins of the same person
             db.rollback()
             user = db.scalar(select(User).where(User.telegram_id == tg["id"]))
+    elif photo and photo != user.photo_url:
+        user.photo_url = photo  # keep the Telegram photo fresh
+        db.commit()
     return _issue_session(db, user)
 
 
@@ -96,7 +103,8 @@ def demo_accounts():
         return []
     return [
         schemas.DemoAccount(
-            email=u["email"], password=DEMO_PASSWORD, full_name=u["full_name"], headline=u["headline"]
+            email=u["email"], password=DEMO_PASSWORD, full_name=u["full_name"], headline=u["headline"],
+            avatar_emoji=u.get("avatar_emoji", ""),
         )
         for u in DEMO_USERS
     ]
