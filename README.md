@@ -1,11 +1,21 @@
-# Клуб·Match — стартапы и вакансии для Telegram mini-app бизнес-клуба
+# Startup Space — стартапы и вакансии для Telegram mini-app Бизнес-клуба ВШЭ
 
 Рабочий прототип модуля, в котором участники клуба размещают стартапы и вакансии, смотрят ленту, откликаются и разбирают входящие отклики.
 
 - **Backend:** Python 3.13, FastAPI, SQLAlchemy 2, psycopg 3
 - **БД:** PostgreSQL 16
-- **Frontend:** SPA на чистом JS (без сборки), отдаётся тем же FastAPI. Сделан mobile-first под Telegram WebApp: внизу плавающее меню, на десктопе оно превращается в верхнее. Оформление в фирменном стиле [Бизнес-клуба ВШЭ](https://hsebusinessclub.ru/): тёмно-синий `#06081c`, синий `#6194ff`/`#2363e7`, жёлтый акцент `#fff705`, шрифт Montserrat. Аватары: фото из Telegram, если его нет — эмодзи на выбор, иначе инициалы.
+- **Frontend:** SPA на чистом JS (без сборки), отдаётся тем же FastAPI. Сделан mobile-first под Telegram WebApp: внизу плавающее меню, на десктопе оно превращается в верхнее. Оформление в фирменной палитре [Бизнес-клуба ВШЭ](https://hsebusinessclub.ru/): глубокий тёмно-синий `#06081c`, голубые акценты `#6194ff` / `#2363e7`, шрифт Montserrat, заголовки — антиква Playfair Display. Аватары: фото из Telegram, если его нет — эмодзи на выбор, иначе инициалы.
 - **Тесты:** pytest + TestClient, гоняются на настоящем PostgreSQL (отдельная БД `club_test`).
+
+## Скриншоты
+
+<table>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/01-login.png" width="240" alt="Вход: Telegram или тестовый аккаунт"/><br/><sub>Вход: Telegram или тестовый аккаунт</sub></td><td align="center" valign="top"><img src="docs/screenshots/02-feed.png" width="240" alt="Лента с поиском и фильтрами"/><br/><sub>Лента с поиском и фильтрами</sub></td><td align="center" valign="top"><img src="docs/screenshots/03-post.png" width="240" alt="Карточка публикации"/><br/><sub>Карточка публикации</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/04-apply.png" width="240" alt="Отклик с сопроводительным сообщением"/><br/><sub>Отклик с сопроводительным сообщением</sub></td><td align="center" valign="top"><img src="docs/screenshots/05-sent.png" width="240" alt="Мои отклики: статус по шагам"/><br/><sub>Мои отклики: статус по шагам</sub></td><td align="center" valign="top"><img src="docs/screenshots/06-received.png" width="240" alt="Входящие отклики у автора"/><br/><sub>Входящие отклики у автора</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/07-accepted.png" width="240" alt="Отклик принят — открыты контакты"/><br/><sub>Отклик принят — открыты контакты</sub></td><td align="center" valign="top"><img src="docs/screenshots/08-new-post.png" width="240" alt="Новая публикация"/><br/><sub>Новая публикация</sub></td><td align="center" valign="top"><img src="docs/screenshots/09-avatar.png" width="240" alt="Выбор аватара"/><br/><sub>Выбор аватара</sub></td></tr>
+</table>
+
+<p align="center"><img src="docs/screenshots/10-desktop.png" width="760" alt="Десктопная версия"/><br/><sub>Десктопная версия</sub></p>
 
 ---
 

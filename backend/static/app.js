@@ -8,23 +8,21 @@ const POST_STATUS = { active: "Активна", paused: "На паузе", close
 const RESP_STATUS = { pending: "На рассмотрении", accepted: "Принят", rejected: "Отклонён", withdrawn: "Отозван" };
 const STAGE_EMOJI = { idea: "💡", mvp: "🛠️", early_revenue: "📈", growth: "🚀" };
 
-// HSE Business Club palette: blues #6194ff → #1f3e8c, yellow accent #fff705.
+// HSE Business Club palette, restrained: deep navy for startups, ocean blue for vacancies.
 const GRADS = {
   startup: [
-    "linear-gradient(135deg,#6194ff,#1f3e8c)",
-    "linear-gradient(135deg,#2363e7,#131b3a)",
-    "linear-gradient(135deg,#5383e5,#2e4885)",
-    "linear-gradient(135deg,#4582de,#19264e)",
+    "linear-gradient(150deg,#1f3e8c 0%,#0c1640 70%)",
+    "linear-gradient(150deg,#2a4aa0 0%,#0e1636 75%)",
+    "linear-gradient(150deg,#19326f 0%,#080d24 75%)",
   ],
   vacancy: [
-    "linear-gradient(135deg,#fff705,#f2c200)",
-    "linear-gradient(135deg,#fff705,#9fd8ff)",
-    "linear-gradient(135deg,#ffe95c,#ffb800)",
+    "linear-gradient(150deg,#1b6fa8 0%,#0a1a3a 75%)",
+    "linear-gradient(150deg,#2363e7 0%,#0a1440 75%)",
+    "linear-gradient(150deg,#1f86c2 0%,#08163a 75%)",
   ],
   people: [
-    "linear-gradient(135deg,#6194ff,#1f3e8c)", "linear-gradient(135deg,#2363e7,#19264e)",
-    "linear-gradient(135deg,#5383e5,#131b3a)", "linear-gradient(135deg,#3f61ae,#06081c)",
-    "linear-gradient(135deg,#4582de,#2e4885)",
+    "linear-gradient(150deg,#2a4aa0,#0c1640)", "linear-gradient(150deg,#1b6fa8,#0a1a3a)",
+    "linear-gradient(150deg,#1f3e8c,#080d24)", "linear-gradient(150deg,#3b4a6b,#121a33)",
   ],
 };
 const AVATAR_EMOJI = ["🚀", "💼", "🧑‍💻", "👩‍💼", "👨‍💼", "🎨", "📈", "💡", "🌱", "📣", "🦄", "🔥",
@@ -628,8 +626,8 @@ function sentCard(r, i) {
     <a class="person" href="#/post/${r.post.id}" style="color:inherit">
       <div class="tile" style="background:${postGrad(fake)}">${postEmoji(fake)}</div>
       <div class="grow"><b>${esc(r.post.title)}</b><div class="small muted">${esc(r.post.author.full_name)} · ${timeAgo(r.created_at)}${r.post.status !== "active" ? ` · ${POST_STATUS[r.post.status].toLowerCase()}` : ""}</div></div>
-      ${badge(r.status, RESP_STATUS[r.status])}
     </a>
+    <div style="margin-top:10px">${badge(r.status, RESP_STATUS[r.status])}</div>
     ${r.status !== "withdrawn" ? steps(r.status) : ""}
     <div class="bubble"><div class="who">Ваше сообщение</div><div class="pre">${esc(r.message)}</div></div>
     ${r.author_note ? `<div class="bubble author"><div class="who">Ответ автора</div>${esc(r.author_note)}</div>` : ""}
