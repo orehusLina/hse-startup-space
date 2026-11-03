@@ -104,12 +104,31 @@ def configure_bot(token: str, url: str) -> None:
             print(f"{method}: {e}", flush=True)
 
 
-def serve_updates(token: str, url: str) -> None:
-    """Reply to /start (and any other private message) with a welcome and an "open app" button."""
+def current_tunnel_url(metrics_url: str) -> str | None:
+    try:
+        host = _get_json(metrics_url).get("hostname")
+        return f"https://{host}" if host else None
+    except (OSError, ValueError):
+        return None
+
+
+def serve_updates(token: str, url: str, metrics_url: str | None = None) -> None:
+    """Reply to /start (and any other private message) with a welcome and an "open app" button.
+
+    Quick-tunnel addresses change when cloudflared restarts, so between polls we re-read the
+    address and re-point the bot's menu button: the t.me link to the bot keeps working.
+    """
     bot_call(token, "deleteWebhook")  # getUpdates does not work while a webhook is set
     print("Бот слушает сообщения (long polling)…", flush=True)
     offset = 0
     while True:
+        if metrics_url and (fresh := current_tunnel_url(metrics_url)) and fresh != url:
+            try:
+                configure_bot(token, fresh)
+                url = fresh
+                print(f"Адрес туннеля сменился, кнопка бота обновлена: {url}", flush=True)
+            except (RuntimeError, OSError) as e:
+                print(f"Не удалось обновить кнопку: {e}", flush=True)
         try:
             updates = bot_call(token, "getUpdates", {"offset": offset, "timeout": 30, "allowed_updates": ["message"]})
         except (RuntimeError, OSError, ValueError) as e:
@@ -148,7 +167,7 @@ def main() -> int:
           f"  Адрес приложения: {url}\n"
           f"  (проверка в браузере: {url}/api/health)\n{line}\n", flush=True)
     if os.getenv("BOT_POLLING", "true").lower() != "false":
-        serve_updates(token, url)
+        serve_updates(token, url, metrics_url)
     return 0
 
 

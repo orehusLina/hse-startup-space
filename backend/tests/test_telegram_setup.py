@@ -36,3 +36,26 @@ def test_start_reply_has_web_app_button():
 def test_setup_without_token(monkeypatch):
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "")
     assert telegram_setup.main() == 1
+
+
+def test_menu_button_follows_new_tunnel_address(monkeypatch):
+    """After a cloudflared restart the bot is re-pointed to the new address."""
+    calls = []
+    hosts = iter(["new.trycloudflare.com"])
+
+    class Stop(Exception):
+        pass
+
+    def fake_bot_call(token, method, payload=None):
+        calls.append((method, payload))
+        if method == "getUpdates":
+            raise Stop
+        return True
+
+    monkeypatch.setattr(telegram_setup, "bot_call", fake_bot_call)
+    monkeypatch.setattr(telegram_setup, "_get_json", lambda url, timeout=5: {"hostname": next(hosts)})
+    try:
+        telegram_setup.serve_updates("1:x", "https://old.trycloudflare.com", "http://tunnel:2000/quicktunnel")
+    except Stop:
+        pass
+    assert ("setChatMenuButton", telegram_setup.menu_button_payload("https://new.trycloudflare.com")) in calls
