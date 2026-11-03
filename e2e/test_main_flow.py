@@ -86,3 +86,27 @@ def test_for_you_and_filters(page: Page):
     expect(page.locator("#fCount")).to_have_text("1")
     for fmt in page.locator(".pcard .pill-meta", has_text="📍").all_inner_texts():
         assert "Офис" in fmt
+
+
+XSS = '<img src=x onerror="window.__pwned=1">Стартап'
+
+
+def test_user_content_is_rendered_as_text_not_html(page: Page):
+    """A post title with markup must show up literally and never execute in another member's browser."""
+    login(page, "Глеб Иванов")
+    page.goto(BASE_URL + "/#/new")
+    page.locator("input[name=title]").fill(XSS)
+    page.locator("textarea[name=summary]").fill('Описание с "кавычками" и <b>тегами</b> внутри')
+    page.locator("input[name=skills]").fill("<svg onload=alert(1)>, Python")
+    page.locator("#submitBtn").click()
+    expect(page.locator(".cover h1")).to_have_text(XSS)
+
+    page.goto(BASE_URL + "/#/me/profile")
+    page.locator("#logout").click()
+    login(page, "Вера Орлова")
+    card = page.locator(".pcard", has_text="Стартап").first
+    expect(card.locator("h3")).to_have_text(XSS)
+    card.click()
+    expect(page.locator(".cover h1")).to_have_text(XSS)
+    assert page.evaluate("window.__pwned") is None
+    assert page.locator(".cover img, .pcard img").count() == 0

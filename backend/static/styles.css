@@ -470,3 +470,8 @@ body.auth { background: radial-gradient(800px 460px at 15% -10%, rgba(97,148,255
 .fchips .chip.on { background: rgba(97,148,255,.16); border-color: rgba(97,148,255,.5); color: #d6e4ff; }
 .toggle { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: 14px; color: var(--text); cursor: pointer; }
 .toggle input { width: 20px; height: 20px; accent-color: #2363e7; flex: none; }
+
+/* segmented control: labels never wrap; wider labels get more room */
+.seg button { flex: 1 1 auto; white-space: nowrap; padding: 8px 6px; }
+@media (max-width: 400px) { .seg button { font-size: 13px; padding: 8px 4px; } }
+@media (max-width: 340px) { .seg button { font-size: 12px; letter-spacing: -.01em; } }

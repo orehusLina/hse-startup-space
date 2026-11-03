@@ -14,6 +14,7 @@ from ..models import AuthSession, User
 from ..security import (
     InvalidInitData,
     hash_token,
+    login_throttle,
     new_token,
     verify_password,
     verify_telegram_init_data,
@@ -80,9 +81,17 @@ def telegram_login(data: schemas.TelegramLoginIn, db: DB):
 @router.post("/login", response_model=schemas.LoginOut)
 def login(data: schemas.LoginIn, db: DB):
     """Email/password login: for test accounts and opening the app outside Telegram."""
+    if wait := login_throttle.retry_after(data.email):
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Слишком много неудачных попыток. Попробуйте через {max(1, wait // 60)} мин.",
+            headers={"Retry-After": str(wait)},
+        )
     user = db.scalar(select(User).where(User.email == data.email))
     if user is None or not user.password_hash or not verify_password(data.password, user.password_hash):
+        login_throttle.failed(data.email)  # also for unknown emails: don't reveal which exist
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Неверный email или пароль")
+    login_throttle.succeeded(data.email)
     return _issue_session(db, user)
 
 

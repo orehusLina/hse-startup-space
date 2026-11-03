@@ -101,6 +101,14 @@ class ProfileUpdate(BaseModel):
     def _skills(cls, v: list[str] | None) -> list[str] | None:
         return None if v is None else normalize_skills(v)
 
+    @field_validator("avatar_emoji")
+    @classmethod
+    def _emoji(cls, v: str | None) -> str | None:
+        # An avatar is an emoji, not free text: no ASCII (letters, digits, markup), at most 8 code points.
+        if v and (len(v) > 8 or any(ord(ch) < 128 for ch in v)):
+            raise ValueError("Аватар — это один эмодзи")
+        return v
+
 
 # ---------- posts ----------
 

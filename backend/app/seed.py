@@ -18,7 +18,7 @@ DEMO_USERS = [
         "headline": "Основатель EdTech-стартапа",
         "city": "Москва",
         "bio": "10 лет в образовании, запускаю платформу для корпоративного обучения.",
-        "skills": ["Product", "EdTech", "Fundraising"],
+        "skills": ["Product", "EdTech", "Fundraising", "SaaS"],
         "contact": "@anna_smirnova",
     },
     {
@@ -28,7 +28,7 @@ DEMO_USERS = [
         "headline": "Backend-разработчик, Python",
         "city": "Санкт-Петербург",
         "bio": "6 лет в финтехе. Ищу проект на стадии MVP с долей.",
-        "skills": ["Python", "PostgreSQL", "FastAPI", "Docker"],
+        "skills": ["Python", "PostgreSQL", "FastAPI", "Docker", "Payments"],
         "contact": "@boris_kim",
     },
     {

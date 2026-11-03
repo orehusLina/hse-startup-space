@@ -10,17 +10,18 @@
 - **Backend:** Python 3.13, FastAPI, SQLAlchemy 2, psycopg 3
 - **БД:** PostgreSQL 16
 - **Frontend:** SPA на чистом JS (без сборки), отдаётся тем же FastAPI. Сделан mobile-first под Telegram WebApp: внизу плавающее меню, на десктопе оно превращается в верхнее. Оформление в фирменной палитре [Бизнес-клуба ВШЭ](https://hsebusinessclub.ru/): глубокий тёмно-синий `#06081c`, голубые акценты `#6194ff` / `#2363e7`, шрифт Montserrat, заголовки — антиква Playfair Display. Аватары: фото из Telegram, если его нет — эмодзи на выбор, иначе инициалы.
-- **Тесты:** 49 тестов API на pytest на настоящем PostgreSQL (отдельная БД `club_test`) + сквозной тест в браузере на Playwright. Всё гоняется в GitHub Actions на каждый пуш.
+- **Тесты:** 65 тестов API на pytest на настоящем PostgreSQL (отдельная БД `club_test`) + 3 сквозных теста в браузере на Playwright. Всё гоняется в GitHub Actions на каждый пуш.
 
 ## Скриншоты
 
 <table>
-  <tr><td align="center" valign="top"><img src="docs/screenshots/01-login.png" width="240" alt="Вход: Telegram или тестовый аккаунт"/><br/><sub>Вход: Telegram или тестовый аккаунт</sub></td><td align="center" valign="top"><img src="docs/screenshots/02-feed.png" width="240" alt="Лента с поиском и фильтрами"/><br/><sub>Лента с поиском и фильтрами</sub></td><td align="center" valign="top"><img src="docs/screenshots/03-post.png" width="240" alt="Карточка публикации"/><br/><sub>Карточка публикации</sub></td></tr>
-  <tr><td align="center" valign="top"><img src="docs/screenshots/04-apply.png" width="240" alt="Отклик с сопроводительным сообщением"/><br/><sub>Отклик с сопроводительным сообщением</sub></td><td align="center" valign="top"><img src="docs/screenshots/05-sent.png" width="240" alt="Мои отклики: статус по шагам"/><br/><sub>Мои отклики: статус по шагам</sub></td><td align="center" valign="top"><img src="docs/screenshots/06-received.png" width="240" alt="Входящие отклики у автора"/><br/><sub>Входящие отклики у автора</sub></td></tr>
-  <tr><td align="center" valign="top"><img src="docs/screenshots/07-accepted.png" width="240" alt="Отклик принят — открыты контакты"/><br/><sub>Отклик принят — открыты контакты</sub></td><td align="center" valign="top"><img src="docs/screenshots/08-new-post.png" width="240" alt="Новая публикация"/><br/><sub>Новая публикация</sub></td><td align="center" valign="top"><img src="docs/screenshots/09-avatar.png" width="240" alt="Выбор аватара"/><br/><sub>Выбор аватара</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/01-login.png" width="240" alt="Вход: Telegram или тестовый аккаунт"/><br/><sub>Вход: Telegram или тестовый аккаунт</sub></td><td align="center" valign="top"><img src="docs/screenshots/02-feed.png" width="240" alt="Лента: поиск, вкладки, фильтры"/><br/><sub>Лента: поиск, вкладки, фильтры</sub></td><td align="center" valign="top"><img src="docs/screenshots/03-for-you.png" width="240" alt="«Для вас»: подбор по навыкам"/><br/><sub>«Для вас»: подбор по навыкам</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/04-filters.png" width="240" alt="Фильтры: формат, стадия, условия"/><br/><sub>Фильтры: формат, стадия, условия</sub></td><td align="center" valign="top"><img src="docs/screenshots/05-post.png" width="240" alt="Публикация: что из навыков совпало"/><br/><sub>Публикация: что из навыков совпало</sub></td><td align="center" valign="top"><img src="docs/screenshots/06-apply.png" width="240" alt="Отклик с сообщением автору"/><br/><sub>Отклик с сообщением автору</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/07-sent.png" width="240" alt="Мои отклики: статус по шагам"/><br/><sub>Мои отклики: статус по шагам</sub></td><td align="center" valign="top"><img src="docs/screenshots/08-received.png" width="240" alt="Входящие: насколько подходит кандидат"/><br/><sub>Входящие: насколько подходит кандидат</sub></td><td align="center" valign="top"><img src="docs/screenshots/09-accepted.png" width="240" alt="Принят: контакт и кнопка «Написать»"/><br/><sub>Принят: контакт и кнопка «Написать»</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/screenshots/10-candidates.png" width="240" alt="«Кто может подойти» и приглашения"/><br/><sub>«Кто может подойти» и приглашения</sub></td><td align="center" valign="top"><img src="docs/screenshots/11-new-post.png" width="240" alt="Новая публикация"/><br/><sub>Новая публикация</sub></td><td align="center" valign="top"><img src="docs/screenshots/12-avatar.png" width="240" alt="Аватар: фото из Telegram или эмодзи"/><br/><sub>Аватар: фото из Telegram или эмодзи</sub></td></tr>
 </table>
 
-<p align="center"><img src="docs/screenshots/10-desktop.png" width="760" alt="Десктопная версия"/><br/><sub>Десктопная версия</sub></p>
+<p align="center"><img src="docs/screenshots/13-desktop.png" width="760" alt="Десктопная версия"/><br/><sub>Десктопная версия</sub></p>
 
 ---
 
@@ -231,6 +232,31 @@ docker-compose.yml   db + api + tunnel + bot-setup (profile "telegram") + tests 
 - Модерация публикаций администраторами клуба, жалобы.
 - Свой домен вместо quick tunnel (у него нет гарантий доступности) и webhook вместо long polling у бота.
 - Подбор не только по тегам, но и по смыслу описаний (эмбеддинги).
+
+---
+
+## Безопасность и целостность данных
+
+Что проверяется тестами (`backend/tests/test_security.py` и остальные, `e2e/`):
+
+| Риск | Защита | Чем проверено |
+|---|---|---|
+| Утечка контактов | Контакт и Telegram ID отдаются только после принятия отклика, с обеих сторон. В подсказках «Кто может подойти» и публичных профилях их нет. | Тест прогоняет все эндпоинты, которые видят автор и кандидат, и ищет контакт в ответах: до принятия его нет, после — есть. После отказа контакты остаются скрытыми. |
+| Доступ к чужому (IDOR) | Каждый эндпоинт проверяет владельца: публикацию правит только автор, отклики видит только автор, отозвать может только кандидат. | Посторонний перебирает все действия над чужой публикацией и откликом: везде `403/404`, данные не меняются. |
+| Подмена полей | Схемы принимают только разрешённые поля: через PATCH нельзя сменить автора, тип публикации, email или Telegram ID. | Тест на mass assignment. |
+| Дубли и гонки | `UNIQUE` в БД + блокировки строк (`FOR UPDATE` / `FOR SHARE`). | 10 параллельных откликов → ровно один `201`. Параллельные «принять» и «отозвать» → ровно один победитель. Параллельные отклики и закрытие публикации → ни одного «висящего» pending в закрытой публикации. |
+| Подделка входа из Telegram | Подпись `initData` по HMAC-SHA256 с токеном бота, сравнение за постоянное время, срок давности сутки. | Тесты на подделанные данные, чужой токен, отсутствие подписи, устаревшие данные. |
+| Перебор паролей | Не больше 10 неудачных попыток на аккаунт за 5 минут, потом `429` с `Retry-After`. Ответ одинаковый для несуществующего email и неверного пароля. | Тесты на блокировку, на то, что соседние аккаунты не страдают, и на одинаковые ответы. |
+| Кража токена из БД | В БД лежит только `sha256` токена, срок жизни сессии ограничен, logout удаляет сессию. | Тест на хранение хэша. |
+| XSS | Весь пользовательский текст экранируется на фронте и в сообщениях бота. Фото принимается только по `https://`, аватар — только эмодзи. | Сквозной тест: публикация с заголовком `<img onerror=…>` показывается текстом и ничего не выполняет в браузере другого участника. Тест на экранирование в уведомлениях. |
+| SQL-инъекции и `LIKE` | Только параметризованные запросы ORM, спецсимволы `%` и `_` в поиске экранируются. | Тест поиска по `100%`. |
+| Встраивание и кэш | `X-Content-Type-Options: nosniff`, `frame-ancestors` только для Telegram, `Cache-Control: no-store` на API с личными данными. | Тест заголовков. |
+| Мусорный ввод | Ограничения длины, количества навыков, размера страницы и допустимых значений. | Тест на слишком длинные и некорректные данные. |
+| Сбой Telegram | Уведомления уходят фоновой задачей после коммита и никогда не ломают запрос. | Тест с «упавшим» Telegram: отклик сохраняется. |
+
+Секреты не хранятся в репозитории: токен бота лежит только в `.env` (он в `.gitignore`). База наружу не открыта, API слушает только `localhost` и доступен извне только по HTTPS через туннель.
+
+**Что осталось за рамками прототипа:** доступ только для резидентов клуба (сейчас войти может любой пользователь Telegram), удаление аккаунта и данных по запросу, ограничение частоты для остальных действий, хранение счётчика попыток входа в Redis при нескольких процессах API.
 
 ---
 

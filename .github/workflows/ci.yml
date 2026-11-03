@@ -19,8 +19,8 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U club" --health-interval 2s --health-timeout 3s --health-retries 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
@@ -48,8 +48,8 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://club:club@localhost:5432/club
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip

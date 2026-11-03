@@ -65,6 +65,44 @@ def verify_telegram_init_data(init_data: str, bot_token: str, max_age_seconds: i
     return user
 
 
+class LoginThrottle:
+    """Limits failed password attempts per account: brute-force protection.
+
+    Keyed by email, not IP: behind the tunnel every request comes from the same address.
+    In-memory is enough for a single API process; with several workers this moves to Redis.
+    """
+
+    def __init__(self, max_failures: int = 10, window_seconds: int = 300):
+        self.max_failures = max_failures
+        self.window = window_seconds
+        self._failures: dict[str, list[float]] = {}
+
+    def _recent(self, key: str) -> list[float]:
+        now = time.time()
+        recent = [t for t in self._failures.get(key, []) if now - t < self.window]
+        self._failures[key] = recent
+        return recent
+
+    def retry_after(self, key: str) -> int:
+        """Seconds until the account may try again, 0 if not blocked."""
+        recent = self._recent(key)
+        if len(recent) < self.max_failures:
+            return 0
+        return max(1, int(self.window - (time.time() - recent[0])))
+
+    def failed(self, key: str) -> None:
+        self._recent(key).append(time.time())
+
+    def succeeded(self, key: str) -> None:
+        self._failures.pop(key, None)
+
+    def reset(self) -> None:
+        self._failures.clear()
+
+
+login_throttle = LoginThrottle()
+
+
 def new_token() -> str:
     return secrets.token_urlsafe(32)
 

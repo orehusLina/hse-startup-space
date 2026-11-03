@@ -44,6 +44,15 @@ def _clean_db():
 
 
 @pytest.fixture(autouse=True)
+def _reset_login_throttle():
+    from app.security import login_throttle
+
+    login_throttle.reset()
+    yield
+    login_throttle.reset()
+
+
+@pytest.fixture(autouse=True)
 def sent(monkeypatch):
     """Bot messages captured instead of being sent to Telegram: list of sendMessage payloads."""
     messages = []
