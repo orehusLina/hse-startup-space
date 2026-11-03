@@ -8,8 +8,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/initdb:/docker-entrypoint-initdb.d:ro
-    ports:
-      - "5432:5432"
+    # No published port on purpose: api/tests reach the db over the compose network,
+    # and a host port would clash with a locally installed PostgreSQL.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U club -d club"]
       interval: 2s
