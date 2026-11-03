@@ -3,18 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Бизнес-клуб · Стартапы и вакансии</title>
+  <title>Startup Space · Бизнес-клуб</title>
+  <meta name="theme-color" content="#6d5dfc" />
   <!-- Inside Telegram this sets --tg-theme-* CSS variables and window.Telegram.WebApp; harmless in a browser. -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-feed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  </svg>
+
   <header class="topbar" id="topbar" hidden>
-    <a href="#/feed" class="brand">Клуб<span>·</span>Match</a>
+    <a href="#/feed" class="brand"><span class="logo">✦</span>Startup Space</a>
     <nav class="nav" id="nav">
-      <a href="#/feed" data-tab="feed"><span class="ico">◎</span><span>Лента</span></a>
-      <a href="#/new" data-tab="new"><span class="ico">＋</span><span>Разместить</span></a>
-      <a href="#/me/posts" data-tab="me"><span class="ico">☺</span><span>Кабинет</span><i class="dot" id="badge" hidden></i></a>
+      <a href="#/feed" data-tab="feed"><svg class="ico"><use href="#i-feed"/></svg><span>Лента</span></a>
+      <a href="#/new" data-tab="new" class="fab" aria-label="Разместить"><svg class="ico"><use href="#i-plus"/></svg><span>Разместить</span></a>
+      <a href="#/me/posts" data-tab="me"><svg class="ico"><use href="#i-user"/></svg><span>Кабинет</span><i class="dot" id="badge" hidden></i></a>
     </nav>
   </header>
   <main id="app" class="container"></main>

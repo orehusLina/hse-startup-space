@@ -21,11 +21,14 @@ def test_setup_flow(monkeypatch, capsys):
 
     assert telegram_setup.main() == 0
     assert calls[1] == ("setChatMenuButton", telegram_setup.menu_button_payload("https://abc.trycloudflare.com"))
+    methods = [m for m, _ in calls]
+    assert {"setMyCommands", "setMyDescription", "setMyShortDescription"} <= set(methods)
     assert "https://t.me/club_match_bot" in capsys.readouterr().out
 
 
 def test_start_reply_has_web_app_button():
-    msg = telegram_setup.open_app_message(42, "https://abc.trycloudflare.com")
+    msg = telegram_setup.open_app_message(42, "https://abc.trycloudflare.com", "<Аня>")
+    assert "&lt;Аня&gt;, добро пожаловать" in msg["text"] and msg["parse_mode"] == "HTML"
     button = msg["reply_markup"]["inline_keyboard"][0][0]
     assert msg["chat_id"] == 42 and button["web_app"]["url"] == "https://abc.trycloudflare.com"
 
