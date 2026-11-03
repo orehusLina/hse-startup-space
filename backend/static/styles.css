@@ -449,3 +449,24 @@ body.auth { background: radial-gradient(800px 460px at 15% -10%, rgba(97,148,255
 .reveal b { word-break: break-all; }
 .reveal .btn { margin-left: auto; }
 .sheet { overflow-x: hidden; max-height: calc(100vh - 24px); overflow-y: auto; }
+
+/* matching & invites */
+.pill-meta.match { background: rgba(97,148,255,.12); border-color: rgba(97,148,255,.35); color: #bcd2ff; font-weight: 600; }
+.chip.mine { border-color: rgba(97,148,255,.45); color: #bcd2ff; background: rgba(97,148,255,.08); }
+.badge.b-invited { color: #bcd2ff; background: rgba(97,148,255,.14); }
+.badge.b-invited::before { background: #8fb2ff; }
+.notice.invite { background: rgba(97,148,255,.08); border: 1px solid rgba(97,148,255,.25); color: #d6e4ff; margin: 0 0 12px; }
+.onboard { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 14px 16px; border-radius: var(--r); color: var(--text);
+  background: linear-gradient(135deg, rgba(97,148,255,.12), rgba(97,148,255,.03)); border: 1px solid rgba(97,148,255,.25); }
+.onboard .e { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(97,148,255,.15); color: #bcd2ff; font-size: 18px; flex: none; }
+.cand .person .btn { flex: none; }
+
+/* filters */
+.search-row { display: flex; gap: 8px; align-items: center; }
+.fbtn { position: relative; flex: none; width: 46px; height: 46px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+.fbtn:hover { border-color: rgba(97,148,255,.4); }
+.fbtn i { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--brand-2); color: #fff; font: 700 11px/18px "Montserrat", sans-serif; font-style: normal; }
+.fchips .chip { padding: 7px 12px; font-size: 13px; }
+.fchips .chip.on { background: rgba(97,148,255,.16); border-color: rgba(97,148,255,.5); color: #d6e4ff; }
+.toggle { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: 14px; color: var(--text); cursor: pointer; }
+.toggle input { width: 20px; height: 20px; accent-color: #2363e7; flex: none; }

@@ -101,6 +101,18 @@ class Post(Base):
     startup: Mapped[Post | None] = relationship(remote_side=[id])
 
 
+class Invite(Base):
+    """An author invited a member to respond to a post (one invite per pair)."""
+
+    __tablename__ = "invites"
+    __table_args__ = (UniqueConstraint("post_id", "user_id", name="invites_post_user_uq"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Response(Base):
     __tablename__ = "responses"
     __table_args__ = (

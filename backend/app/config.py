@@ -22,6 +22,12 @@ class Settings:
     # Token from @BotFather: used to verify Telegram WebApp initData. Empty = Telegram login disabled.
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     telegram_init_data_max_age: int = int(os.getenv("TELEGRAM_INIT_DATA_MAX_AGE", "86400"))
+    # Public https address of the app for "open" buttons in bot notifications.
+    # If empty, it is read from the cloudflared quick tunnel (TUNNEL_METRICS_URL).
+    public_url: str = os.getenv("PUBLIC_URL", "").rstrip("/")
+    tunnel_metrics_url: str = os.getenv("TUNNEL_METRICS_URL", "")
+    # Demo autopilot: seeded demo members answer real Telegram users after this many seconds.
+    demo_autoreply_delay: float = float(os.getenv("DEMO_AUTOREPLY_DELAY", "6"))
 
 
 settings = Settings()

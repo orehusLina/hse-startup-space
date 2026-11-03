@@ -8,6 +8,8 @@ os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 os.environ["PASSWORD_ITERATIONS"] = "1000"  # fast hashing in tests
 os.environ["SEED_ON_START"] = "false"
 os.environ["TELEGRAM_BOT_TOKEN"] = "123456:TEST-BOT-TOKEN"
+os.environ["DEMO_AUTOREPLY_DELAY"] = "0"  # demo autopilot acts immediately in tests
+os.environ["PUBLIC_URL"] = "https://club.example"
 
 import itertools  # noqa: E402
 
@@ -15,6 +17,7 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
+from app import notify  # noqa: E402
 from app.db import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import User  # noqa: E402
@@ -38,6 +41,14 @@ def _clean_db():
     with engine.begin() as conn:
         tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+
+
+@pytest.fixture(autouse=True)
+def sent(monkeypatch):
+    """Bot messages captured instead of being sent to Telegram: list of sendMessage payloads."""
+    messages = []
+    monkeypatch.setattr(notify, "transport", lambda method, payload: messages.append(payload))
+    return messages
 
 
 @pytest.fixture
@@ -77,16 +88,18 @@ class Member:
 
 @pytest.fixture
 def make_member(client):
-    def _make(name: str | None = None, contact: str = "") -> Member:
+    def _make(name: str | None = None, contact: str = "", skills: list[str] | None = None,
+              telegram_id: int | None = None, email: str | None = None) -> Member:
         n = next(_counter)
-        email = f"user{n}@test.local"
+        email = email or f"user{n}@test.local"
         with SessionLocal() as db:
             user = User(
                 email=email,
                 password_hash=hash_password(PASSWORD),
                 full_name=name or f"User {n}",
                 contact=contact or f"@user{n}",
-                skills=[],
+                skills=skills or [],
+                telegram_id=telegram_id,
             )
             db.add(user)
             db.commit()

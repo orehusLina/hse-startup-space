@@ -1,9 +1,9 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import select
 
-from .. import schemas, serializers
+from .. import notify, schemas, serializers
 from ..deps import DB, CurrentUser
 from ..models import Post, Response
 
@@ -32,7 +32,7 @@ def withdraw(response_id: int, db: DB, user: CurrentUser):
 
 
 @router.post("/{response_id}/decision", response_model=schemas.ReceivedResponseOut)
-def decide(response_id: int, data: schemas.DecisionIn, db: DB, user: CurrentUser):
+def decide(response_id: int, data: schemas.DecisionIn, db: DB, user: CurrentUser, bg: BackgroundTasks):
     response = _lock_response(db, response_id)
     post = db.get(Post, response.post_id)
     if post.author_id != user.id:
@@ -46,4 +46,5 @@ def decide(response_id: int, data: schemas.DecisionIn, db: DB, user: CurrentUser
     response.decided_at = datetime.now(UTC)
     db.commit()
     db.refresh(response)
+    bg.add_task(notify.deliver, "decision", response_id=response.id)
     return serializers.received_response(response)

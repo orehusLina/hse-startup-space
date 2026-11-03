@@ -89,3 +89,19 @@ def test_my_posts_include_response_counters(author, applicant, make_member):
 
     mine = author.get("/api/me/posts").json()
     assert mine[0]["responses_total"] == 2 and mine[0]["responses_pending"] == 2
+
+
+def test_feed_filters_by_format_stage_and_compensation(author, applicant):
+    mvp = author.create_post(kind="startup", title="MVP-стартап", stage="mvp", work_format="remote")
+    author.create_post(kind="startup", title="Идея", stage="idea", work_format="office")
+    author.create_post(kind="vacancy", title="Вакансия MVP", startup_id=mvp["id"], work_format="remote",
+                       compensation="150 тыс. ₽")
+    author.create_post(kind="vacancy", title="Без условий", work_format="hybrid", compensation="   ")
+
+    titles = lambda **p: sorted(x["title"] for x in applicant.get("/api/posts", params=p).json()["items"])  # noqa: E731
+    assert titles(work_format="remote") == ["MVP-стартап", "Вакансия MVP"]
+    # a vacancy inherits the stage of its startup
+    assert titles(stage="mvp") == ["MVP-стартап", "Вакансия MVP"]
+    assert titles(with_compensation=True) == ["Вакансия MVP"]
+    assert titles(kind="vacancy", work_format="hybrid") == ["Без условий"]
+    assert applicant.get("/api/posts", params={"work_format": "moon"}).status_code == 422

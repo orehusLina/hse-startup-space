@@ -154,6 +154,13 @@ class PostUpdate(BaseModel):
         return None if v is None else normalize_skills(v)
 
 
+class Match(BaseModel):
+    """Skills of a post that the viewer (or an applicant) has."""
+
+    matched: list[str]
+    total: int
+
+
 class StartupRef(BaseModel):
     id: int
     title: str
@@ -164,6 +171,7 @@ class MyResponseRef(BaseModel):
     id: int
     status: ResponseStatus
     author_contact: str | None = None
+    author_contact_link: str | None = None
 
 
 class PostOut(BaseModel):
@@ -184,6 +192,8 @@ class PostOut(BaseModel):
     startup: StartupRef | None = None
     is_own: bool = False
     my_response: MyResponseRef | None = None
+    match: Match | None = None
+    invited: bool = False
     # Only filled for the author.
     responses_total: int | None = None
     responses_pending: int | None = None
@@ -232,10 +242,12 @@ class SentResponseOut(BaseModel):
     post: PostBrief
     # Revealed only when the response is accepted.
     author_contact: str | None = None
+    author_contact_link: str | None = None
 
 
 class ApplicantOut(UserPublic):
     contact: str | None = None
+    contact_link: str | None = None
 
 
 class ReceivedResponseOut(BaseModel):
@@ -247,3 +259,17 @@ class ReceivedResponseOut(BaseModel):
     decided_at: datetime | None
     post: PostBrief
     applicant: ApplicantOut
+    match: Match | None = None
+
+
+class CandidateOut(BaseModel):
+    user: UserPublic
+    match: Match
+    invited: bool
+    # Only members who logged in via Telegram can receive an invitation message.
+    can_notify: bool
+
+
+class InviteOut(BaseModel):
+    invited: bool
+    notified: bool

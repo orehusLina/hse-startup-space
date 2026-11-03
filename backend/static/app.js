@@ -112,15 +112,14 @@ if (tg?.initData) {
 const haptic = (type) => tg?.HapticFeedback?.notificationOccurred?.(type);
 const tap = () => tg?.HapticFeedback?.impactOccurred?.("light");
 
-/** "@username" → link that opens the chat (inside Telegram without leaving the app). */
-function contactAction(contact) {
-  const m = /^@?([A-Za-z0-9_]{5,32})$/.exec((contact || "").trim());
-  if (!m) return "";
-  return `<a class="btn sm ok" href="https://t.me/${m[1]}" target="_blank" data-tglink="https://t.me/${m[1]}">${svg("send", "ico-sm")} Написать</a>`;
+/** Chat link from the API (https://t.me/… or tg://user?id=… when there is no username). */
+function contactAction(link) {
+  if (!link || !/^(https:\/\/t\.me\/|tg:\/\/user\?id=)/.test(link)) return "";
+  return `<a class="btn sm ok" href="${esc(link)}" target="_blank" data-tglink="${esc(link)}">${svg("send", "ico-sm")} Написать</a>`;
 }
 document.addEventListener("click", (e) => {
   const a = e.target.closest("[data-tglink]");
-  if (a && tg?.openTelegramLink) { e.preventDefault(); tg.openTelegramLink(a.dataset.tglink); }
+  if (a && tg?.openTelegramLink && a.dataset.tglink.startsWith("https://t.me/")) { e.preventDefault(); tg.openTelegramLink(a.dataset.tglink); }
 });
 
 // Inside Telegram the user is identified by signed initData, no password needed.
@@ -282,12 +281,52 @@ async function viewLogin() {
   $app.querySelectorAll(".demo button").forEach((b) => (b.onclick = () => doLogin(b.dataset.email, b.dataset.pass)));
 }
 
+// ---------- matching ----------
+const matchPill = (m) => m && m.matched.length
+  ? `<span class="pill-meta match">✦ Совпадает ${m.matched.length} из ${m.total} ${plural(m.total, "навыка", "навыков", "навыков")}</span>` : "";
+function matchChips(skills, m, active) {
+  const have = new Set((m?.matched || []).map((x) => x.toLowerCase()));
+  return skills?.length ? `<div class="chips">${skills.map((s) =>
+    `<span class="chip ${have.has(s.toLowerCase()) ? "mine" : ""} ${active && s.toLowerCase() === active.toLowerCase() ? "on" : ""}" data-skill="${esc(s)}">${have.has(s.toLowerCase()) ? "✓ " : ""}${esc(s)}</span>`).join("")}</div>` : "";
+}
+
 // ---------- views: feed ----------
-const feedState = { kind: "", q: "", skill: "" };
+const feedState = { kind: "", q: "", skill: "", sort: "new", work_format: "", stage: "", with_compensation: false };
+const activeFilterCount = () => [feedState.work_format, feedState.stage, feedState.with_compensation].filter(Boolean).length;
+
+/** Bottom sheet with minimal filters: format, startup stage, "conditions specified". */
+function openFilters(onApply) {
+  const draft = { work_format: feedState.work_format, stage: feedState.stage, with_compensation: feedState.with_compensation };
+  const group = (key, title, map) => `
+    <div class="section-title" style="margin-top:18px">${title}</div>
+    <div class="chips fchips" data-key="${key}">
+      <span class="chip ${!draft[key] ? "on" : ""}" data-v="">Любой</span>
+      ${Object.entries(map).map(([k, t]) => `<span class="chip ${draft[key] === k ? "on" : ""}" data-v="${k}">${t}</span>`).join("")}
+    </div>`;
+  openSheet(`
+    <div class="row spread"><h3>Фильтры</h3><button type="button" class="btn ghost sm" id="fReset">Сбросить</button></div>
+    ${group("work_format", "Формат работы", FORMAT)}
+    ${feedState.kind !== "vacancy" ? group("stage", "Стадия стартапа", STAGE) : ""}
+    <label class="toggle"><input type="checkbox" id="fComp" ${draft.with_compensation ? "checked" : ""}/><span>Только с указанными условиями или оплатой</span></label>
+    <button type="button" class="btn block lg" id="fApply" style="margin-top:18px">Показать</button>`,
+  (root, close) => {
+    root.querySelectorAll(".fchips").forEach((g) => (g.onclick = (e) => {
+      const c = e.target.closest(".chip");
+      if (!c) return;
+      tap();
+      draft[g.dataset.key] = c.dataset.v;
+      g.querySelectorAll(".chip").forEach((x) => x.classList.toggle("on", x === c));
+    }));
+    root.querySelector("#fComp").onchange = (e) => (draft.with_compensation = e.target.checked);
+    root.querySelector("#fReset").onclick = () => { Object.assign(feedState, { work_format: "", stage: "", with_compensation: false }); close(); onApply(); };
+    root.querySelector("#fApply").onclick = () => { Object.assign(feedState, draft); close(); onApply(); };
+  });
+}
 
 function postCard(p, i = 0) {
   const status = p.my_response
     ? badge(p.my_response.status, RESP_STATUS[p.my_response.status])
+    : p.invited ? `<span class="badge b-invited">Вас пригласили</span>`
     : p.is_own && p.status !== "active" ? badge(p.status, POST_STATUS[p.status]) : "";
   const sub = [KIND[p.kind], p.stage && STAGE[p.stage]].filter(Boolean).join(" · ");
   return `
@@ -302,8 +341,9 @@ function postCard(p, i = 0) {
       </div>
       <h3>${esc(p.title)}</h3>
       <p class="clamp2">${esc(p.summary)}</p>
-      ${chips(p.skills.slice(0, 5), feedState.skill)}
+      ${matchChips(p.skills.slice(0, 5), p.match, feedState.skill)}
       <div class="pfoot">
+        ${matchPill(p.match)}
         ${p.compensation ? `<span class="pill-meta money">💰 ${esc(p.compensation)}</span>` : ""}
         ${p.work_format ? `<span class="pill-meta">📍 ${FORMAT[p.work_format]}</span>` : ""}
         ${p.is_own ? `<span class="pill-meta">📨 ${p.responses_total} · новых ${p.responses_pending}</span>` : ""}
@@ -345,13 +385,18 @@ async function viewFeed() {
       </div>
     </section>
     <div class="toolbar">
-      <div class="search">${svg("search")}<input id="q" type="search" placeholder="Поиск по названию, описанию, навыкам" value="${esc(feedState.q)}" /></div>
+      <div class="search-row">
+        <div class="search grow">${svg("search")}<input id="q" type="search" placeholder="Поиск по названию, навыкам" value="${esc(feedState.q)}" /></div>
+        <button class="fbtn" id="filtersBtn" aria-label="Фильтры"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg><i id="fCount" hidden></i></button>
+      </div>
       <div class="seg" id="kinds"><span class="pill"></span>
-        ${[["", "Все"], ["startup", "🚀 Стартапы"], ["vacancy", "💼 Вакансии"]]
-          .map(([k, t]) => `<button data-v="${k}" class="${feedState.kind === k ? "on" : ""}">${t}</button>`).join("")}
+        ${[["", "Все"], ["match", "✦ Для вас"], ["startup", "Стартапы"], ["vacancy", "Вакансии"]]
+          .map(([k, t]) => `<button data-v="${k}" class="${(feedState.sort === "match" ? "match" : feedState.kind) === k ? "on" : ""}">${t}</button>`).join("")}
       </div>
       <div id="skillFilter"></div>
     </div>
+    ${auth.user.skills.length ? "" : `<a class="onboard rise" href="#/me/profile">
+      <span class="e">✦</span><span class="grow"><b>Добавьте навыки в профиль</b><br/><span class="small muted">Покажем, где вы нужнее всего, и авторы смогут пригласить вас в проект</span></span>${svg("chev", "ico-sm chev")}</a>`}
     <div id="list"></div>
     <div id="more" style="margin-top:14px"></div>`;
 
@@ -372,16 +417,31 @@ async function viewFeed() {
   async function load(reset) {
     if (reset) { page = 1; items = []; list.innerHTML = skeleton(); }
     const mySeq = ++seq;
-    document.getElementById("skillFilter").innerHTML = feedState.skill
-      ? `<button class="filter-chip" id="clearSkill"># ${esc(feedState.skill)} ${svg("x", "ico-sm")}</button>` : "";
-    const clr = document.getElementById("clearSkill");
-    if (clr) clr.onclick = () => { feedState.skill = ""; load(true); };
+    const active = [
+      feedState.skill && ["skill", `# ${feedState.skill}`],
+      feedState.work_format && ["work_format", `📍 ${FORMAT[feedState.work_format]}`],
+      feedState.stage && ["stage", `🧭 ${STAGE[feedState.stage]}`],
+      feedState.with_compensation && ["with_compensation", "💰 С условиями"],
+    ].filter(Boolean);
+    document.getElementById("skillFilter").innerHTML = active.length
+      ? `<div class="row" style="gap:6px">${active.map(([k, t]) => `<button class="filter-chip" data-clear="${k}">${esc(t)} ${svg("x", "ico-sm")}</button>`).join("")}</div>` : "";
+    document.querySelectorAll("[data-clear]").forEach((b) => (b.onclick = () => {
+      feedState[b.dataset.clear] = b.dataset.clear === "with_compensation" ? false : "";
+      load(true);
+    }));
+    const n = activeFilterCount(), fc = document.getElementById("fCount");
+    fc.hidden = !n; fc.textContent = n;
     try {
-      const data = await api("/api/posts", { params: { kind: feedState.kind, q: feedState.q, skill: feedState.skill, page, page_size: 10 } });
+      const { kind, q, skill, sort, work_format, stage, with_compensation } = feedState;
+      const data = await api("/api/posts", { params: { kind, q, skill, sort, work_format, stage, with_compensation: with_compensation || "", page, page_size: 10 } });
       if (mySeq !== seq) return; // a newer request superseded this one
       items = items.concat(data.items);
       if (!items.length) {
-        list.innerHTML = feedState.q || feedState.kind || feedState.skill
+        list.innerHTML = feedState.sort === "match"
+          ? (auth.user.skills.length
+              ? empty("🧭", "Пока нет точных совпадений", "Расширьте список навыков в профиле или загляните во «Все».", `<a class="btn ghost" href="#/me/profile">Изменить навыки</a>`)
+              : empty("✦", "Расскажите, что вы умеете", "Добавьте навыки — и здесь появятся проекты, где вы нужнее всего.", `<a class="btn" href="#/me/profile">Добавить навыки</a>`))
+          : feedState.q || feedState.kind || feedState.skill || activeFilterCount()
           ? empty("🔭", "Ничего не нашлось", "Попробуйте другой запрос или сбросьте фильтры.")
           : empty("🌱", "Здесь пока пусто", "Станьте первым — разместите стартап или вакансию.", `<a class="btn" href="#/new">${svg("plus", "ico-sm")} Разместить</a>`);
       } else if (reset) {
@@ -400,7 +460,12 @@ async function viewFeed() {
     }
   }
 
-  mountSegmented(kinds, (v) => { feedState.kind = v; load(true); });
+  document.getElementById("filtersBtn").onclick = () => { tap(); openFilters(() => load(true)); };
+  mountSegmented(kinds, (v) => {
+    feedState.sort = v === "match" ? "match" : "new";
+    feedState.kind = v === "match" ? "" : v;
+    load(true);
+  });
   $app.querySelectorAll(".stat[data-k]").forEach((b) => (b.onclick = () => {
     kinds.querySelector(`button[data-v="${b.dataset.k}"]`).click();
   }));
@@ -454,7 +519,8 @@ async function viewPost(m) {
         <div class="tile" style="width:38px;height:38px;font-size:18px;background:${pick(GRADS.startup, p.startup.id)}">🚀</div>
         <div class="grow"><div class="small muted">Вакансия стартапа</div><b>${esc(p.startup.title)}</b></div>${svg("chev", "ico-sm chev")}</a>` : ""}
     <div style="margin-top:12px">
-      ${p.skills.length ? `<div class="card rise ${p.kind}" style="--i:3;--accent:var(--${p.kind})"><div class="section-title">Навыки</div>${chips(p.skills)}</div>` : ""}
+      ${p.invited && !p.my_response ? `<div class="notice invite rise" style="--i:2">✨ ${esc(p.author.full_name)} приглашает вас откликнуться — ваши навыки подходят под эту публикацию.</div>` : ""}
+      ${p.skills.length ? `<div class="card rise ${p.kind}" style="--i:3;--accent:var(--${p.kind})"><div class="row spread"><div class="section-title" style="margin:0">Навыки</div>${matchPill(p.match)}</div>${matchChips(p.skills, p.match)}</div>` : ""}
       ${textSection("О проекте", p.description, 4)}
       ${textSection(p.kind === "startup" ? "Кого ищем" : "Требования", p.looking_for, 5)}
       ${vacancies}
@@ -490,7 +556,7 @@ function renderApplicantPanel(p, el) {
     html += `<div class="card rise" style="--i:7;margin-top:12px">
       <div class="row spread"><h3>Ваш отклик</h3>${badge(r.status, RESP_STATUS[r.status])}</div>
       ${steps(r.status)}
-      ${r.status === "accepted" ? `<div class="reveal"><span class="e">🤝</span><div class="grow"><span class="small muted">Контакт автора</span><b>${esc(r.author_contact || "не указан")}</b></div>${contactAction(r.author_contact)}</div>` : ""}
+      ${r.status === "accepted" ? `<div class="reveal"><span class="e">🤝</span><div class="grow"><span class="small muted">Контакт автора</span><b>${esc(r.author_contact || "не указан")}</b></div>${contactAction(r.author_contact_link)}</div>` : ""}
       ${r.status === "pending" ? `<p class="small muted" style="margin-top:12px">Автор увидит отклик в своём кабинете. Контакты откроются, когда он примет решение.</p>
         <button class="btn danger sm" id="withdraw" style="margin-top:6px">Отозвать отклик</button>` : ""}
       ${r.status === "rejected" ? `<p class="small muted" style="margin-top:12px">Не расстраивайтесь — в ленте много других проектов.</p>` : ""}
@@ -522,6 +588,7 @@ function openApplySheet(p) {
       <label>Сообщение автору <span class="req">*</span></label>
       <textarea name="message" maxlength="2000" placeholder="Коротко о себе: опыт, чем можете помочь проекту, почему вам интересно" autofocus></textarea>
       <div class="hint"><span id="cnt">0</span>/2000 · минимум 10 символов. Ваш контакт автор увидит только после того, как примет отклик.</div>
+      ${!auth.user.contact && !auth.user.telegram_id ? `<div class="notice warn">В профиле не указан контакт — автору будет нечем с вами связаться. <a href="#/me/profile">Заполнить</a></div>` : ""}
       <div class="err" id="applyErr"></div>
       <button class="btn block lg" style="margin-top:16px">${svg("send", "ico-sm")} Отправить отклик</button>
     </form>`, (root, close) => {
@@ -563,7 +630,8 @@ async function renderOwnerPanel(p, el) {
       </div>
       ${controls}
     </div>
-    <h2>Отклики</h2><div id="responses">${skeleton(2)}</div>`;
+    <h2>Отклики</h2><div id="responses">${skeleton(2)}</div>
+    ${p.status !== "closed" ? `<h2>Кто может подойти</h2><p class="small muted" style="margin-top:-4px">Резиденты, чьи навыки совпадают с публикацией. Пригласите — им придёт сообщение в Telegram.</p><div id="cands">${skeleton(1)}</div>` : ""}`;
   el.querySelectorAll("[data-status]").forEach((b) => (b.onclick = async () => {
     const status = b.dataset.status;
     if (status === "closed" && !confirm("Закрыть публикацию? Все ожидающие отклики будут отклонены. Это действие нельзя отменить.")) return;
@@ -571,8 +639,37 @@ async function renderOwnerPanel(p, el) {
     try { await api(`/api/posts/${p.id}`, { method: "PATCH", body: { status } }); toast("Статус обновлён"); router(); }
     catch (e) { toast(e.message, true); b.disabled = false; }
   }));
-  const responses = await api(`/api/posts/${p.id}/responses`);
+  const [responses, cands] = await Promise.all([
+    api(`/api/posts/${p.id}/responses`),
+    p.status !== "closed" ? api(`/api/posts/${p.id}/candidates`) : [],
+  ]);
   renderReceived(document.getElementById("responses"), responses, { showPost: false });
+  const cel = document.getElementById("cands");
+  if (cel) renderCandidates(cel, p, cands);
+}
+
+function renderCandidates(el, p, cands) {
+  if (!p.skills.length) { el.innerHTML = `<div class="notice">Добавьте навыки в публикацию — и мы подберём подходящих резидентов.</div>`; return; }
+  el.innerHTML = cands.length ? `<div class="list">${cands.map((c, i) => `
+    <div class="card rise cand" style="--i:${i}">
+      <div class="person">${avatar(c.user)}
+        <div class="grow"><b>${esc(c.user.full_name)}</b><div class="small muted">${esc(c.user.headline || "Резидент клуба")}</div></div>
+        ${c.invited ? `<span class="badge b-invited">Приглашён</span>`
+          : `<button class="btn sm" data-invite="${c.user.id}" ${p.status !== "active" ? "disabled" : ""}>Пригласить</button>`}
+      </div>
+      ${matchChips(c.user.skills, c.match)}
+      <div class="pfoot">${matchPill(c.match)}${c.can_notify ? "" : `<span class="small muted">не в Telegram — увидит приглашение в приложении</span>`}</div>
+    </div>`).join("")}</div>`
+    : `<div class="notice">Пока никто не подходит по навыкам. Как только появятся резиденты с нужным стеком — они будут здесь.</div>`;
+  el.querySelectorAll("[data-invite]").forEach((b) => (b.onclick = async () => {
+    b.disabled = true;
+    try {
+      const r = await api(`/api/posts/${p.id}/invite/${b.dataset.invite}`, { method: "POST" });
+      haptic("success");
+      toast(r.notified ? "Приглашение отправлено в Telegram" : "Приглашение отмечено в приложении");
+      b.outerHTML = `<span class="badge b-invited">Приглашён</span>`;
+    } catch (e) { toast(e.message, true); b.disabled = false; }
+  }));
 }
 
 // ---------- responses lists ----------
@@ -587,9 +684,10 @@ function receivedCard(r, showPost, i) {
       ${badge(r.status, RESP_STATUS[r.status])}
     </div>
     <div class="bubble"><div class="who">${timeAgo(r.created_at)}</div><div class="pre">${esc(r.message)}</div></div>
-    ${chips(a.skills)}
+    ${matchChips(a.skills, r.match)}
+    ${r.match?.matched.length ? `<div class="pfoot">${matchPill(r.match)}</div>` : ""}
     ${r.author_note ? `<div class="bubble author"><div class="who">Ваш ответ</div>${esc(r.author_note)}</div>` : ""}
-    ${r.status === "accepted" ? `<div class="reveal"><span class="e">🤝</span><div class="grow"><span class="small muted">Контакт кандидата</span><b>${esc(a.contact || "не указан")}</b></div>${contactAction(a.contact)}</div>` : ""}
+    ${r.status === "accepted" ? `<div class="reveal"><span class="e">🤝</span><div class="grow"><span class="small muted">Контакт кандидата</span><b>${esc(a.contact || "не указан")}</b></div>${contactAction(a.contact_link)}</div>` : ""}
     ${r.status === "pending" ? `
       <input class="note" placeholder="Комментарий кандидату (необязательно)" maxlength="1000" style="margin-top:12px" />
       <div class="decide">
@@ -632,7 +730,7 @@ function sentCard(r, i) {
     ${r.status !== "withdrawn" ? steps(r.status) : ""}
     <div class="bubble"><div class="who">Ваше сообщение</div><div class="pre">${esc(r.message)}</div></div>
     ${r.author_note ? `<div class="bubble author"><div class="who">Ответ автора</div>${esc(r.author_note)}</div>` : ""}
-    ${r.status === "accepted" ? `<div class="reveal"><span class="e">🤝</span><div class="grow"><span class="small muted">Контакт автора</span><b>${esc(r.author_contact || "не указан")}</b></div>${contactAction(r.author_contact)}</div>` : ""}
+    ${r.status === "accepted" ? `<div class="reveal"><span class="e">🤝</span><div class="grow"><span class="small muted">Контакт автора</span><b>${esc(r.author_contact || "не указан")}</b></div>${contactAction(r.author_contact_link)}</div>` : ""}
   </div>`;
 }
 
@@ -848,4 +946,12 @@ async function viewForm(editId) {
   };
 }
 
+// Bot notifications open the app with ?open=<route>: Telegram owns the URL fragment, so the
+// route comes in the query string and is moved into the hash here.
+(() => {
+  const open = new URLSearchParams(location.search).get("open");
+  if (open && /^[a-z]+(\/[a-z0-9]+)*$/.test(open)) {
+    history.replaceState(null, "", location.pathname + `#/${open}`);
+  }
+})();
 router();

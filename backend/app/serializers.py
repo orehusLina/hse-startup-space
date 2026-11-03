@@ -5,8 +5,9 @@ from collections.abc import Sequence
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
-from . import schemas
-from .models import Post, Response, User
+from . import matching, schemas
+from .models import Invite, Post, Response, User
+from .notify import contact_link
 
 
 def user_public(user: User) -> schemas.UserPublic:
@@ -53,6 +54,9 @@ def posts_out(db: Session, posts: Sequence[Post], viewer: User) -> list[schemas.
         }
     own_ids = [p.id for p in posts if p.author_id == viewer.id]
     counts = response_counts(db, own_ids)
+    invited_ids = set(
+        db.scalars(select(Invite.post_id).where(Invite.post_id.in_(ids), Invite.user_id == viewer.id))
+    ) if ids else set()
 
     result = []
     for p in posts:
@@ -73,12 +77,17 @@ def posts_out(db: Session, posts: Sequence[Post], viewer: User) -> list[schemas.
             author=user_public(p.author),
             startup=startup_ref(p.startup),
             is_own=p.author_id == viewer.id,
+            invited=p.id in invited_ids,
         )
+        if not out.is_own:
+            out.match = matching.match(viewer.skills, p.skills)
         if (r := my_responses.get(p.id)) is not None:
+            accepted = r.status == "accepted"
             out.my_response = schemas.MyResponseRef(
                 id=r.id,
                 status=r.status,
-                author_contact=p.author.contact if r.status == "accepted" else None,
+                author_contact=p.author.contact if accepted else None,
+                author_contact_link=contact_link(p.author) if accepted else None,
             )
         if out.is_own:
             out.responses_total, out.responses_pending = counts.get(p.id, (0, 0))
@@ -96,13 +105,16 @@ def sent_response(r: Response) -> schemas.SentResponseOut:
         decided_at=r.decided_at,
         post=post_brief(r.post),
         author_contact=r.post.author.contact if r.status == "accepted" else None,
+        author_contact_link=contact_link(r.post.author) if r.status == "accepted" else None,
     )
 
 
 def received_response(r: Response) -> schemas.ReceivedResponseOut:
     applicant = schemas.ApplicantOut.model_validate(r.applicant)
     # Contacts are exchanged both ways only after the author accepts.
-    applicant.contact = r.applicant.contact if r.status == "accepted" else None
+    accepted = r.status == "accepted"
+    applicant.contact = r.applicant.contact if accepted else None
+    applicant.contact_link = contact_link(r.applicant) if accepted else None
     return schemas.ReceivedResponseOut(
         id=r.id,
         status=r.status,
@@ -112,4 +124,5 @@ def received_response(r: Response) -> schemas.ReceivedResponseOut:
         decided_at=r.decided_at,
         post=post_brief(r.post),
         applicant=applicant,
+        match=matching.match(r.applicant.skills, r.post.skills),
     )

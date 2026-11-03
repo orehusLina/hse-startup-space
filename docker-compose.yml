@@ -25,6 +25,10 @@ services:
       DEMO_MODE: "true"
       # Token from @BotFather; read from .env. Without it Telegram login is off and only test accounts work.
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      # Address for "open" buttons in bot notifications: PUBLIC_URL if you have a domain,
+      # otherwise the current quick-tunnel address is read from cloudflared.
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      TUNNEL_METRICS_URL: http://tunnel:2000/quicktunnel
     restart: unless-stopped
     # Bound to localhost: open http://localhost:8000 on this machine; from outside the app
     # is reachable only over https through the tunnel.
