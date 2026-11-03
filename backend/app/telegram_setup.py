@@ -3,6 +3,7 @@
 1. Waits for the cloudflared quick tunnel to publish its public https address.
 2. Points the bot's menu button ("Открыть") at that address via the Bot API.
 3. Prints the link to the bot.
+4. Keeps running and answers /start with an "open the app" button (long polling).
 
 Only the standard library is used, so no extra dependencies are needed.
 """
@@ -29,7 +30,8 @@ def bot_call(token: str, method: str, payload: dict | None = None) -> dict:
         headers={"Content-Type": "application/json"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=15) as r:
+        # Long polling holds the request open for payload["timeout"] seconds.
+        with urllib.request.urlopen(req, timeout=15 + (payload or {}).get("timeout", 0)) as r:
             data = json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         data = json.loads(e.read().decode() or "{}")
@@ -55,6 +57,35 @@ def menu_button_payload(url: str) -> dict:
     return {"menu_button": {"type": "web_app", "text": "Открыть", "web_app": {"url": url}}}
 
 
+def open_app_message(chat_id: int, url: str) -> dict:
+    return {
+        "chat_id": chat_id,
+        "text": "Стартапы и вакансии участников бизнес-клуба. Нажмите кнопку, чтобы открыть приложение:",
+        "reply_markup": {"inline_keyboard": [[{"text": "🚀 Открыть приложение", "web_app": {"url": url}}]]},
+    }
+
+
+def serve_updates(token: str, url: str) -> None:
+    """Answer /start (and any other message) with a button that opens the mini-app."""
+    bot_call(token, "deleteWebhook")  # getUpdates does not work while a webhook is set
+    offset = 0
+    while True:
+        try:
+            updates = bot_call(token, "getUpdates", {"offset": offset, "timeout": 30})
+        except (RuntimeError, OSError) as e:
+            print(f"getUpdates: {e}", flush=True)
+            time.sleep(3)
+            continue
+        for upd in updates:
+            offset = upd["update_id"] + 1
+            msg = upd.get("message")
+            if msg and msg.get("chat", {}).get("type") == "private":
+                try:
+                    bot_call(token, "sendMessage", open_app_message(msg["chat"]["id"], url))
+                except (RuntimeError, OSError) as e:
+                    print(f"sendMessage: {e}", flush=True)
+
+
 def main() -> int:
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     if not token:
@@ -70,8 +101,11 @@ def main() -> int:
         return 1
     line = "=" * 60
     print(f"\n{line}\n  Готово! Откройте бота в Telegram: https://t.me/{me['username']}\n"
-          f"  и нажмите кнопку «Открыть» слева от поля ввода.\n"
-          f"  Адрес приложения: {url}\n{line}\n", flush=True)
+          f"  и нажмите /start — бот пришлёт кнопку «Открыть приложение».\n"
+          f"  Адрес приложения: {url}\n"
+          f"  (проверка в браузере: {url}/api/health)\n{line}\n", flush=True)
+    if os.getenv("BOT_POLLING", "true").lower() != "false":
+        serve_updates(token, url)
     return 0
 
 
